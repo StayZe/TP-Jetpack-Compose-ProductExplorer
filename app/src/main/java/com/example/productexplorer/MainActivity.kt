@@ -53,8 +53,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             ProductExplorerTheme {
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    ProductCatalogScreen(
+                    ProductCatalogContainer(
                         products = sampleProducts(),
+                        categories = sampleCategories(),
                         onProductClick = {
                             // Plus tard : ouvrir le détail du produit
                         },
@@ -618,8 +619,9 @@ fun ProductHomeScreenPreview() {
 // ---------- TP6 : Catalogue de produits ----------
 
 @Composable
-fun ProductCatalogScreen(
+fun ProductCatalogContainer(
     products: List<ProductUi>,
+    categories: List<String>,
     onProductClick: (ProductUi) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -655,6 +657,39 @@ fun ProductCatalogScreen(
         }
     }
 
+    ProductCatalogScreen(
+        products = filteredProducts,
+        categories = categories,
+        searchQuery = searchQuery,
+        onSearchQueryChange = { newValue ->
+            searchQuery = newValue
+        },
+        showOnlyInStock = showOnlyInStock,
+        onToggleStockFilter = {
+            showOnlyInStock = !showOnlyInStock
+        },
+        favoriteProductIds = favoriteProductIds,
+        onFavoriteClick = { productId ->
+            toggleFavorite(productId)
+        },
+        onProductClick = onProductClick,
+        modifier = modifier
+    )
+}
+
+@Composable
+fun ProductCatalogScreen(
+    products: List<ProductUi>,
+    categories: List<String>,
+    searchQuery: String,
+    onSearchQueryChange: (String) -> Unit,
+    showOnlyInStock: Boolean,
+    onToggleStockFilter: () -> Unit,
+    favoriteProductIds: List<Int>,
+    onFavoriteClick: (Int) -> Unit,
+    onProductClick: (ProductUi) -> Unit,
+    modifier: Modifier = Modifier
+) {
     LazyColumn(
         modifier = modifier
             .fillMaxSize()
@@ -680,9 +715,7 @@ fun ProductCatalogScreen(
         item {
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { newValue ->
-                    searchQuery = newValue
-                },
+                onValueChange = onSearchQueryChange,
                 label = {
                     Text(text = "Rechercher un produit")
                 },
@@ -692,9 +725,7 @@ fun ProductCatalogScreen(
 
         item {
             Button(
-                onClick = {
-                    showOnlyInStock = !showOnlyInStock
-                }
+                onClick = onToggleStockFilter
             ) {
                 Text(
                     text = if (showOnlyInStock) {
@@ -708,24 +739,24 @@ fun ProductCatalogScreen(
 
         item {
             Text(
-                text = "${filteredProducts.size} produit(s) affiché(s)",
+                text = "${products.size} produit(s) affiché(s)",
                 style = MaterialTheme.typography.bodyMedium
             )
         }
 
         item {
-            CategoryRow(categories = sampleCategories())
+            CategoryRow(categories = categories)
         }
 
         items(
-            items = filteredProducts,
+            items = products,
             key = { product -> product.id }
         ) { product ->
             ProductListItem(
                 product = product,
                 isFavorite = favoriteProductIds.contains(product.id),
                 onFavoriteClick = {
-                    toggleFavorite(product.id)
+                    onFavoriteClick(product.id)
                 },
                 onClick = {
                     onProductClick(product)
@@ -809,17 +840,6 @@ fun CategoryRow(
     }
 }
 
-@Preview(showBackground = true)
-@Composable
-fun ProductCatalogScreenPreview() {
-    ProductExplorerTheme {
-        ProductCatalogScreen(
-            products = sampleProducts(),
-            onProductClick = {}
-        )
-    }
-}
-
 // ---------- TP7 : Previews clair et sombre ----------
 
 @Preview(
@@ -827,10 +847,11 @@ fun ProductCatalogScreenPreview() {
     name = "Catalogue - Dark Theme"
 )
 @Composable
-fun ProductCatalogScreenDarkPreview() {
+fun ProductCatalogContainerDarkPreview() {
     ProductExplorerTheme(darkTheme = true) {
-        ProductCatalogScreen(
+        ProductCatalogContainer(
             products = sampleProducts(),
+            categories = sampleCategories(),
             onProductClick = {}
         )
     }
@@ -841,10 +862,31 @@ fun ProductCatalogScreenDarkPreview() {
     name = "Catalogue - Light Theme"
 )
 @Composable
-fun ProductCatalogScreenLightPreview() {
+fun ProductCatalogContainerLightPreview() {
     ProductExplorerTheme(darkTheme = false) {
+        ProductCatalogContainer(
+            products = sampleProducts(),
+            categories = sampleCategories(),
+            onProductClick = {}
+        )
+    }
+}
+
+// ---------- TP9 : Preview de l'écran stateless ----------
+
+@Preview(showBackground = true)
+@Composable
+fun ProductCatalogScreenStatelessPreview() {
+    ProductExplorerTheme {
         ProductCatalogScreen(
             products = sampleProducts(),
+            categories = sampleCategories(),
+            searchQuery = "",
+            onSearchQueryChange = {},
+            showOnlyInStock = false,
+            onToggleStockFilter = {},
+            favoriteProductIds = listOf(1),
+            onFavoriteClick = {},
             onProductClick = {}
         )
     }
